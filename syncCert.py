@@ -33,7 +33,7 @@ class Sync:
                     raise subprocess.CalledProcessError(result.returncode, command)
 
             except subprocess.CalledProcessError as e:
-                print(f"Container not found on {ip}.")
+                print(f"Container not found on {ip}")
                 failed_ips.append(ip)
 
         for failed_ip in failed_ips:
@@ -45,7 +45,7 @@ class Sync:
         for item in domains:
             try:
                 command = ["rsync", "-arvhP", f"root@{main_ip}:/floppy/home/acme/.acme.sh/{item}", "."]
-                result = subprocess.run(command, check=True)
+                result = subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 print(f"Status: OK for {item}")
 
             except subprocess.CalledProcessError as e:
