@@ -16,7 +16,29 @@ class Sync:
         domain_name = input("Please enter domain names (separated by commas or spaces): ")
         DOMAIN_NAME = [name.strip() for name in domain_name.replace(',', ' ').split()]
         return DOMAIN_NAME
-        
+
+    def check_container_state(self, reserv_ips):
+        print("Checking container state on reserv servers...")
+
+        failed_ips = []
+
+        for ip in reserv_ips:
+            try:
+                command = ["ssh", f"root@{ip}", "test", "-e", "/dev/mapper/floppy"]
+                result = subprocess.run(command, check=True)
+
+                if result.returncode == 0:
+                    print(f"Container exists on {ip}")
+                else:
+                    raise subprocess.CalledProcessError(result.returncode, command)
+
+            except subprocess.CalledProcessError as e:
+                print(f"Container not found on {ip}.")
+                failed_ips.append(ip)
+
+        for failed_ip in failed_ips:
+            reserv_ips.remove(failed_ip)
+
     def get_cert_dir(self, main_ip, domains):
         print("Downloading certificates from the main server...")
 
@@ -120,6 +142,7 @@ if __name__ == "__main__":
     reserv_ips = sync.get_reserv_ip()
     domains = sync.get_domain_name()
 
+    sync.check_container_state(reserv_ips)
     sync.get_cert_dir(main_ip, domains)
     sync.sync_to_reserv(domains, reserv_ips)
     sync.change_owner(domains, reserv_ips)
