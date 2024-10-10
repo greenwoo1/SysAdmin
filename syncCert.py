@@ -62,7 +62,7 @@ class Sync:
             for domain in domains:
                 try:
                     command = ["rsync", "-arvhP", f"./{domain}", f"root@{ip}:/floppy/home/acme/.acme.sh/"]
-                    result = subprocess.run(command, check=True)
+                    result = subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     print(f"Status: OK for {domain} on {ip}")
 
                 except subprocess.CalledProcessError as e:
