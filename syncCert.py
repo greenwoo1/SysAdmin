@@ -61,7 +61,7 @@ class Sync:
         for ip in reserv_ips:
             for domain in domains:
                 try:
-                    command = ["rsync", "-arvhP", f"./{domain}", f"root@{ip}:/floppy/home/acme/.acme.sh/"]
+                    command = ["rsync", "-arvhP", f"{domain}", f"root@{ip}:/floppy/home/acme/.acme.sh/"]
                     result = subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     print(f"Status: OK for {domain} on {ip}")
 
@@ -88,7 +88,7 @@ class Sync:
 
         for ip in reserv_ips:
             try:
-                command = ["ssh", f"root@{ip}", "systemctl", "reload", "bind9.service"]
+                command = ["ssh", f"root@{ip}", "systemctl", "restart", "bind9.service"]
                 result = subprocess.run(command, check=True)
 
                 if result.returncode == 0:
@@ -113,16 +113,20 @@ class Sync:
                 command = ["ssh", f"root@{ip}", "nginx", "-t"]
                 result = subprocess.run(command, check=True, capture_output=True, text=True)
 
-                if "syntax is ok" in result.stdout and "test is successful" in result.stdout:
+                stdout = result.stdout.strip()
+                stderr = result.stderr.strip()
+
+                if "syntax is ok" in stdout and "test is successful" in stdout:
                     print(f"NGINX configuration is valid on {ip}")
-                elif "test failed" in result.stderr:
-                    print(f"Failed to validate NGINX configuration on {ip}. Error: {result.stderr.strip()}")
+                elif "test failed" in stderr:
+                    print(f"Failed to validate NGINX configuration on {ip}. Error: {stderr}")
                     failed_ips.append(ip)
                 else:
-                    print(f"Unexpected output from NGINX on {ip}. Output: {result.stdout.strip() + ' ' + result.stderr.strip()}")
+                    print(f"Unexpected output from NGINX on {ip}. Output: {stdout} {stderr}")
 
             except subprocess.CalledProcessError as e:
-                print(f"Error executing command on {ip}. Error: {e.stderr.strip()}")
+                error_message = e.stderr.strip() if e.stderr else "No error message available"
+                print(f"Error executing command on {ip}. Error: {error_message}")
                 failed_ips.append(ip)
 
         for failed_ip in failed_ips:
