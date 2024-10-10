@@ -25,12 +25,16 @@ class Sync:
         for ip in reserv_ips:
             try:
                 command = ["ssh", f"root@{ip}", "test", "-e", "/dev/mapper/floppy"]
-                result = subprocess.run(command, check=True)
+                result = subprocess.run(command, check=True, timeout=30)
 
                 if result.returncode == 0:
                     print(f"Container exists on {ip}")
                 else:
                     raise subprocess.CalledProcessError(result.returncode, command)
+
+            except subprocess.TimeoutExpired:
+                print(f"Error: Connection to {ip} timed out")
+                failed_ips.append(ip)
 
             except subprocess.CalledProcessError as e:
                 print(f"Container not found on {ip}")
